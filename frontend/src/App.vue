@@ -1,411 +1,427 @@
 <template>
-  <div id="app">
-    <div class="header">
-      <h1>🐕 知识库系统</h1>
-      <div class="search-box">
-        <input
-          v-model="searchKeyword"
-          placeholder="搜索笔记..."
-          @keyup.enter="handleSearch"
-        />
-        <button @click="handleSearch">搜索</button>
-      </div>
-      <button class="btn-primary" @click="showCreateModal = true">
-        + 新建笔记
-      </button>
+  <div id="app" :class="{ dark: isDarkMode }">
+    <!-- 顶部导航栏 -->
+    <TopBar
+      :user-name="userName"
+      @search="handleSearch"
+      @new-note="handleNewNote"
+      @toggle-theme="handleThemeToggle"
+      @home="handleHome"
+    />
+
+    <!-- 主布局 -->
+    <div class="main-layout">
+      <!-- 左侧边栏 -->
+      <Sidebar
+        :collapsed="sidebarCollapsed"
+        :categories="categories"
+        :tags="tags"
+        :recent-notes="recentNotes"
+        :note-count="notes.length"
+        @select-category="handleSelectCategory"
+        @select-tag="handleSelectTag"
+        @select-recent="handleSelectRecent"
+        @toggle-collapse="handleToggleSidebar"
+      />
+
+      <!-- 中间列表面板 -->
+      <NoteList
+        :notes="filteredNotes"
+        :selected-note-id="selectedNoteId"
+        :view-mode="viewMode"
+        :sort-by="sortBy"
+        :loading="loading"
+        :filter="currentFilter"
+        @select-note="handleSelectNote"
+        @star-note="handleStarNote"
+        @delete-note="handleDeleteNote"
+        @move-note="handleMoveNote"
+        @export-note="handleExportNote"
+        @new-note="handleNewNote"
+        @view-mode-change="handleViewModeChange"
+        @sort-by-change="handleSortByChange"
+        @batch-delete="handleBatchDelete"
+        @batch-move="handleBatchMove"
+      />
+
+      <!-- 右侧编辑器 -->
+      <NoteEditor
+        :note="currentNote"
+        :categories="categories"
+        :tags="tags"
+        @save="handleSaveNote"
+        @delete="handleDeleteNote"
+        @star="handleStarNote"
+        @new-note="handleNewNote"
+        @close="handleCloseEditor"
+      />
     </div>
 
-    <div class="content">
-      <div class="category-filter">
-        <select v-model="selectedCategory" @change="filterByCategory">
-          <option value="">所有分类</option>
-          <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-            {{ cat.name }}
-          </option>
-        </select>
-      </div>
-
-      <div class="note-list">
-        <div
-          v-for="note in filteredNotes"
-          :key="note.id"
-          class="note-card"
-          @click="viewNote(note)"
-        >
-          <div class="note-header">
-            <h3>{{ note.title }}</h3>
-            <div class="note-actions">
-              <button @click.stop="editNote(note)">编辑</button>
-              <button @click.stop="deleteNote(note.id)">删除</button>
-            </div>
-          </div>
-          <div class="note-content-preview">
-            {{ note.content.substring(0, 150) }}...
-          </div>
-          <div class="note-meta">
-            <span v-if="note.tags" class="tags">{{ note.tags }}</span>
-            <span class="time">{{ formatTime(note.createdAt) }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 编辑/创建弹窗 -->
-    <div v-if="showCreateModal || editingNote" class="modal">
-      <div class="modal-content">
-        <h2>{{ editingNote ? '编辑笔记' : '新建笔记' }}</h2>
-        <div class="form-group">
-          <label>标题</label>
-          <input v-model="noteForm.title" placeholder="笔记标题" />
-        </div>
-        <div class="form-group">
-          <label>分类</label>
-          <select v-model="noteForm.categoryId">
-            <option value="">选择分类</option>
-            <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-              {{ cat.name }}
-            </option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>标签（逗号分隔）</label>
-          <input v-model="noteForm.tags" placeholder="Java, SpringBoot" />
-        </div>
-        <div class="form-group">
-          <label>内容（支持 Markdown）</label>
-          <textarea
-            v-model="noteForm.content"
-            placeholder="笔记内容..."
-            rows="10"
-          ></textarea>
-        </div>
-        <div class="form-actions">
-          <button @click="saveNote">保存</button>
-          <button @click="cancelEdit">取消</button>
-        </div>
-      </div>
-    </div>
+    <!-- 全局消息提示 -->
+    <el-config-provider :locale="zhCn">
+      <slot></slot>
+    </el-config-provider>
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { ElConfigProvider, ElMessage, ElMessageBox } from 'element-plus'
+import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+
+// 导入组件
+import TopBar from './components/TopBar.vue'
+import Sidebar from './components/Sidebar.vue'
+import NoteList from './components/NoteList.vue'
+import NoteEditor from './components/NoteEditor.vue'
+
+// 导入 API
 import api from './api'
 
-export default {
-  name: 'App',
-  data() {
-    return {
-      notes: [],
-      categories: [],
-      searchKeyword: '',
-      selectedCategory: '',
-      showCreateModal: false,
-      editingNote: null,
-      noteForm: {
-        title: '',
-        content: '',
-        categoryId: null,
-        tags: ''
+// 响应式数据
+const userName = ref('User')
+const isDarkMode = ref(localStorage.getItem('theme') !== 'light')
+const sidebarCollapsed = ref(false)
+const notes = ref([])
+const categories = ref([])
+const tags = ref([])
+const recentNotes = ref([])
+const selectedNoteId = ref(null)
+const currentNote = ref(null)
+const viewMode = ref('list')
+const sortBy = ref('time')
+const loading = ref(false)
+const searchKeyword = ref('')
+const selectedCategory = ref(null)
+const selectedTag = ref(null)
+
+// 当前过滤器
+const currentFilter = computed(() => ({
+  category: selectedCategory.value,
+  tag: selectedTag.value,
+  keyword: searchKeyword.value
+}))
+
+// 过滤后的笔记列表
+const filteredNotes = computed(() => {
+  let result = notes.value
+
+  // 按分类筛选
+  if (selectedCategory.value) {
+    result = result.filter(n => n.categoryId === selectedCategory.value)
+  }
+
+  // 按标签筛选
+  if (selectedTag.value) {
+    result = result.filter(n =>
+      n.tags && n.tags.some(t => t.id === selectedTag.value)
+    )
+  }
+
+  // 按关键词搜索
+  if (searchKeyword.value) {
+    const keyword = searchKeyword.value.toLowerCase()
+    result = result.filter(n =>
+      n.title.toLowerCase().includes(keyword) ||
+      n.content.toLowerCase().includes(keyword)
+    )
+  }
+
+  return result
+})
+
+// 初始化加载数据
+const loadData = async () => {
+  loading.value = true
+  try {
+    // 并行加载笔记、分类、标签
+    const [notesRes, catsRes, tagsRes] = await Promise.all([
+      api.notes.getAll(),
+      api.categories.getAll(),
+      // TODO: 获取标签列表的 API
+      Promise.resolve({ data: [] })
+    ])
+
+    notes.value = notesRes.data
+    categories.value = catsRes.data
+    tags.value = tagsRes.data
+
+    // 设置最近访问笔记
+    recentNotes.value = [...notes.value]
+      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+      .slice(0, 10)
+
+    console.log('数据加载完成:', {
+      notes: notes.value.length,
+      categories: categories.value.length,
+      tags: tags.value.length
+    })
+  } catch (error) {
+    console.error('加载数据失败:', error)
+    ElMessage.error('加载数据失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 处理搜索
+const handleSearch = (keyword) => {
+  searchKeyword.value = keyword
+}
+
+// 处理主题切换
+const handleThemeToggle = (theme) => {
+  isDarkMode.value = theme === 'dark'
+  localStorage.setItem('theme', theme)
+
+  const html = document.documentElement
+  if (theme === 'dark') {
+    html.classList.add('dark')
+    html.classList.remove('light')
+  } else {
+    html.classList.add('light')
+    html.classList.remove('dark')
+  }
+
+  ElMessage.success(`已切换到${theme === 'dark' ? '暗色' : '亮色'}主题`)
+}
+
+// 处理返回首页
+const handleHome = () => {
+  selectedCategory.value = null
+  selectedTag.value = null
+  searchKeyword.value = ''
+  selectedNoteId.value = null
+  currentNote.value = null
+}
+
+// 处理新建笔记
+const handleNewNote = () => {
+  const newNote = {
+    id: Date.now(),
+    title: '无标题笔记',
+    content: '',
+    categoryId: null,
+    tags: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    isStarred: false,
+    viewCount: 0
+  }
+
+  notes.value.unshift(newNote)
+  selectedNoteId.value = newNote.id
+  currentNote.value = newNote
+}
+
+// 处理侧边栏切换
+const handleToggleSidebar = () => {
+  sidebarCollapsed.value = !sidebarCollapsed.value
+}
+
+// 处理选择分类
+const handleSelectCategory = (categoryId) => {
+  selectedCategory.value = categoryId
+  selectedTag.value = null
+  searchKeyword.value = ''
+}
+
+// 处理选择标签
+const handleSelectTag = (tagId) => {
+  selectedTag.value = tagId
+  selectedCategory.value = null
+  searchKeyword.value = ''
+}
+
+// 处理选择最近笔记
+const handleSelectRecent = (noteId) => {
+  selectedNoteId.value = noteId
+  currentNote.value = notes.value.find(n => n.id === noteId)
+}
+
+// 处理选择笔记
+const handleSelectNote = (noteId) => {
+  selectedNoteId.value = noteId
+  currentNote.value = notes.value.find(n => n.id === noteId)
+
+  // 更新访问次数
+  const note = currentNote.value
+  if (note) {
+    note.viewCount = (note.viewCount || 0) + 1
+  }
+}
+
+// 处理保存笔记
+const handleSaveNote = async (noteData) => {
+  try {
+    // TODO: 调用 API 保存笔记
+    console.log('保存笔记:', noteData)
+
+    // 更新本地数据
+    const index = notes.value.findIndex(n => n.id === noteData.id)
+    if (index !== -1) {
+      notes.value[index] = {
+        ...notes.value[index],
+        ...noteData,
+        updatedAt: new Date().toISOString()
       }
+      currentNote.value = notes.value[index]
     }
-  },
 
-  computed: {
-    filteredNotes() {
-      let result = this.notes
+    ElMessage.success('保存成功')
+  } catch (error) {
+    console.error('保存失败:', error)
+    ElMessage.error('保存失败')
+    throw error
+  }
+}
 
-      if (this.selectedCategory) {
-        result = result.filter(n => n.categoryId === this.selectedCategory)
-      }
+// 处理星标笔记
+const handleStarNote = async (noteId, isStarred) => {
+  try {
+    // TODO: 调用 API 更新星标状态
+    console.log('星标笔记:', noteId, isStarred)
 
-      if (this.searchKeyword) {
-        const keyword = this.searchKeyword.toLowerCase()
-        result = result.filter(n =>
-          n.title.toLowerCase().includes(keyword) ||
-          n.content.toLowerCase().includes(keyword)
-        )
-      }
-
-      return result
+    const note = notes.value.find(n => n.id === noteId)
+    if (note) {
+      note.isStarred = isStarred
     }
-  },
 
-  async mounted() {
-    await this.loadData()
-  },
+    if (currentNote.value && currentNote.value.id === noteId) {
+      currentNote.value.isStarred = isStarred
+    }
 
-  methods: {
-    async loadData() {
-      try {
-        const [notesRes, catsRes] = await Promise.all([
-          api.notes.getAll(),
-          api.categories.getAll()
-        ])
-        this.notes = notesRes.data
-        this.categories = catsRes.data
-      } catch (error) {
-        alert('加载数据失败：' + error.message)
-      }
-    },
+    ElMessage.success(isStarred ? '已添加星标' : '已取消星标')
+  } catch (error) {
+    console.error('操作失败:', error)
+    ElMessage.error('操作失败')
+  }
+}
 
-    handleSearch() {
-      // 搜索逻辑在 computed 中处理
-    },
+// 处理删除笔记
+const handleDeleteNote = async (noteId) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这条笔记吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
 
-    viewNote(note) {
-      alert(`标题：${note.title}\n\n内容：\n${note.content}`)
-    },
+    // TODO: 调用 API 删除笔记
+    console.log('删除笔记:', noteId)
 
-    editNote(note) {
-      this.editingNote = note
-      this.noteForm = {
-        title: note.title,
-        content: note.content,
-        categoryId: note.categoryId,
-        tags: note.tags || ''
-      }
-    },
+    // 从列表中移除
+    const index = notes.value.findIndex(n => n.id === noteId)
+    if (index !== -1) {
+      notes.value.splice(index, 1)
+    }
 
-    async saveNote() {
-      if (!this.noteForm.title || !this.noteForm.content) {
-        alert('请填写标题和内容')
-        return
-      }
+    // 如果删除的是当前选中的笔记
+    if (selectedNoteId.value === noteId) {
+      selectedNoteId.value = null
+      currentNote.value = null
+    }
 
-      try {
-        if (this.editingNote) {
-          await api.notes.update(this.editingNote.id, this.noteForm)
-        } else {
-          await api.notes.create(this.noteForm)
-        }
-
-        this.cancelEdit()
-        await this.loadData()
-        alert('保存成功')
-      } catch (error) {
-        alert('保存失败：' + error.message)
-      }
-    },
-
-    async deleteNote(id) {
-      if (confirm('确定删除这条笔记吗？')) {
-        try {
-          await api.notes.delete(id)
-          await this.loadData()
-          alert('删除成功')
-        } catch (error) {
-          alert('删除失败：' + error.message)
-        }
-      }
-    },
-
-    cancelEdit() {
-      this.editingNote = null
-      this.showCreateModal = false
-      this.noteForm = {
-        title: '',
-        content: '',
-        categoryId: null,
-        tags: ''
-      }
-    },
-
-    filterByCategory() {
-      // 过滤逻辑在 computed 中处理
-    },
-
-    formatTime(time) {
-      return new Date(time).toLocaleDateString('zh-CN')
+    ElMessage.success('删除成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除失败:', error)
+      ElMessage.error('删除失败')
     }
   }
 }
+
+// 处理移动笔记
+const handleMoveNote = (noteId) => {
+  // TODO: 实现移动笔记功能
+  console.log('移动笔记:', noteId)
+  ElMessage.info('移动功能开发中')
+}
+
+// 处理导出笔记
+const handleExportNote = (noteId) => {
+  const note = notes.value.find(n => n.id === noteId)
+  if (note) {
+    const blob = new Blob([note.content], { type: 'text/markdown' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${note.title || 'note'}.md`
+    link.click()
+    URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  }
+}
+
+// 处理关闭编辑器
+const handleCloseEditor = () => {
+  selectedNoteId.value = null
+  currentNote.value = null
+}
+
+// 处理视图切换
+const handleViewModeChange = (mode) => {
+  viewMode.value = mode
+}
+
+// 处理排序变更
+const handleSortByChange = (value) => {
+  sortBy.value = value
+}
+
+// 处理批量删除
+const handleBatchDelete = (noteIds) => {
+  console.log('批量删除:', noteIds)
+  ElMessage.info('批量删除功能开发中')
+}
+
+// 处理批量移动
+const handleBatchMove = (noteIds) => {
+  console.log('批量移动:', noteIds)
+  ElMessage.info('批量移动功能开发中')
+}
+
+// 组件挂载时加载数据
+onMounted(() => {
+  loadData()
+})
 </script>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+/* 全局样式已在 main.js 中定义 */
 #app {
-  font-family: Arial, sans-serif;
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.header {
+  height: 100vh;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid #eee;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.header h1 {
+/* 主布局 */
+.main-layout {
   flex: 1;
-}
-
-.search-box {
   display: flex;
-  gap: 10px;
+  overflow: hidden;
 }
 
-.search-box input {
-  padding: 8px;
-  width: 200px;
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .main-layout {
+    flex-direction: column;
+  }
+
+  #app {
+    height: 100vh;
+  }
 }
 
-.btn-primary {
-  background: #4CAF50;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  cursor: pointer;
-  border-radius: 4px;
+/*过渡动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
 }
 
-.content {
-  margin-top: 20px;
-}
-
-.category-filter select {
-  padding: 8px;
-  width: 200px;
-  margin-bottom: 20px;
-}
-
-.note-list {
-  display: grid;
-  gap: 15px;
-}
-
-.note-card {
-  border: 1px solid #ddd;
-  padding: 15px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: box-shadow 0.2s;
-}
-
-.note-card:hover {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.note-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.note-header h3 {
-  font-size: 18px;
-  color: #333;
-}
-
-.note-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.note-actions button {
-  padding: 4px 8px;
-  cursor: pointer;
-}
-
-.note-actions button:last-child {
-  background: #ff4444;
-  color: white;
-  border: none;
-  border-radius: 3px;
-}
-
-.note-content-preview {
-  color: #666;
-  margin-bottom: 10px;
-  line-height: 1.6;
-}
-
-.note-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
-  color: #999;
-}
-
-.tags {
-  background: #e3f2fd;
-  color: #1976d2;
-  padding: 2px 8px;
-  border-radius: 10px;
-}
-
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-content {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 80%;
-  max-width: 600px;
-}
-
-.modal-content h2 {
-  margin-bottom: 20px;
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.form-group textarea {
-  resize: vertical;
-}
-
-.form-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-.form-actions button {
-  padding: 8px 16px;
-  cursor: pointer;
-  border-radius: 4px;
-  border: none;
-}
-
-.form-actions button:first-child {
-  background: #4CAF50;
-  color: white;
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

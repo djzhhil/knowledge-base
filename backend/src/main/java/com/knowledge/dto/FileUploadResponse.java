@@ -1,0 +1,35 @@
+package com.knowledge.dto;
+
+import com.knowledge.entity.Note;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * 文件上传响应 DTO
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class FileUploadResponse {
+    private Long noteId;
+    private String title;
+    private String message;
+    private boolean success;
+
+    public static FileUploadResponse success(Note note) {
+        FileUploadResponse response = new FileUploadResponse();
+        response.setNoteId(note.getId());
+        response.setTitle(note.getTitle());
+        response.setMessage("文件上传成功");
+        response.setSuccess(true);
+        return response;
+    }
+
+    public static FileUploadResponse error(String message) {
+        FileUploadResponse response = new FileUploadResponse();
+        response.setMessage(message);
+        response.setSuccess(false);
+        return response;
+    }
+}

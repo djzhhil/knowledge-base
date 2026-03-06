@@ -8,8 +8,11 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
-    "vue": "^3.3.0",
-    "axios": "^1.6.0"
+    "@element-plus/icons-vue": "^2.3.2",
+    "axios": "^1.6.0",
+    "element-plus": "^2.13.4",
+    "mavon-editor": "^2.10.4",
+    "vue": "^3.3.0"
   },
   "devDependencies": {
     "@vue/cli-service": "^5.0.0"
