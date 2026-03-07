@@ -20,7 +20,7 @@
 
         <!-- 排序 -->
         <el-select
-          v-model="sortBy"
+          :model="sortBy"
           placeholder="排序"
           @change="handleSortChange"
           class="sort-select"
