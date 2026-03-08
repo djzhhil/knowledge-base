@@ -2,6 +2,7 @@ package com.knowledge.controller;
 
 import com.knowledge.entity.Category;
 import com.knowledge.service.CategoryService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -22,7 +23,7 @@ public class CategoryController {
     }
 
     @PostMapping
-    public Category createCategory(@RequestBody Category category) {
+    public Category createCategory(@Valid @RequestBody Category category) {
         return categoryService.createCategory(category);
     }
 

@@ -2,6 +2,7 @@ package com.knowledge.controller;
 
 import com.knowledge.entity.Note;
 import com.knowledge.service.NoteService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -27,12 +28,12 @@ public class NoteController {
     }
 
     @PostMapping
-    public Note createNote(@RequestBody Note note) {
+    public Note createNote(@Valid @RequestBody Note note) {
         return noteService.createNote(note);
     }
 
     @PutMapping("/{id}")
-    public Note updateNote(@PathVariable Long id, @RequestBody Note note) {
+    public Note updateNote(@PathVariable Long id, @Valid @RequestBody Note note) {
         return noteService.updateNote(id, note);
     }
 

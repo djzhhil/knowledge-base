@@ -1,6 +1,8 @@
 package com.knowledge.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import java.time.LocalDateTime;
 
@@ -13,9 +15,12 @@ public class Note {
     private Long id;
 
     @Column(nullable = false)
+    @NotBlank(message = "标题不能为空")
+    @Size(max = 200, message = "标题长度不能超过200个字符")
     private String title;
 
     @Column(columnDefinition = "TEXT")
+    @Size(max = 10000, message = "内容长度不能超过10000个字符")
     private String content;
 
     @Column(name = "category_id")

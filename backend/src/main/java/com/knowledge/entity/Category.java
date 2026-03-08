@@ -1,6 +1,8 @@
 package com.knowledge.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import java.time.LocalDateTime;
 
@@ -13,6 +15,8 @@ public class Category {
     private Long id;
 
     @Column(nullable = false)
+    @NotBlank(message = "分类名称不能为空")
+    @Size(max = 100, message = "分类名称长度不能超过100个字符")
     private String name;
 
     private String description;
