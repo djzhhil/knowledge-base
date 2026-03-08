@@ -1,8 +1,11 @@
 package com.knowledge.controller;
 
+import com.knowledge.dto.Result;
 import com.knowledge.entity.Note;
 import com.knowledge.service.NoteService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,38 +23,45 @@ public class NoteController {
     }
 
     @GetMapping
-    public Page<Note> getAllNotes(@RequestParam(defaultValue = "0") int page,
-                                   @RequestParam(defaultValue = "10") int size) {
-        return noteService.getAllNotes(PageRequest.of(page, size));
+    public Result<Page<Note>> getAllNotes(@RequestParam(defaultValue = "0") @Min(0) int page,
+                                   @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size) {
+        Page<Note> notes = noteService.getAllNotes(PageRequest.of(page, size));
+        return Result.success(notes);
     }
 
     @GetMapping("/{id}")
-    public Note getNoteById(@PathVariable Long id) {
-        return noteService.getNoteById(id);
+    public Result<Note> getNoteById(@PathVariable Long id) {
+        Note note = noteService.getNoteById(id);
+        return Result.success(note);
     }
 
     @PostMapping
-    public Note createNote(@Valid @RequestBody Note note) {
-        return noteService.createNote(note);
+    public Result<Note> createNote(@Valid @RequestBody Note note) {
+        Note createdNote = noteService.createNote(note);
+        return Result.success(createdNote);
     }
 
     @PutMapping("/{id}")
-    public Note updateNote(@PathVariable Long id, @Valid @RequestBody Note note) {
-        return noteService.updateNote(id, note);
+    public Result<Note> updateNote(@PathVariable Long id, @Valid @RequestBody Note note) {
+        Note updatedNote = noteService.updateNote(id, note);
+        return Result.success(updatedNote);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteNote(@PathVariable Long id) {
+    public Result<Void> deleteNote(@PathVariable Long id) {
         noteService.deleteNote(id);
+        return Result.success("删除成功", null);
     }
 
     @GetMapping("/search")
-    public List<Note> searchNotes(@RequestParam String keyword) {
-        return noteService.searchNotes(keyword);
+    public Result<List<Note>> searchNotes(@RequestParam String keyword) {
+        List<Note> notes = noteService.searchNotes(keyword);
+        return Result.success(notes);
     }
 
     @GetMapping("/category/{categoryId}")
-    public List<Note> getNotesByCategory(@PathVariable Long categoryId) {
-        return noteService.getNotesByCategory(categoryId);
+    public Result<List<Note>> getNotesByCategory(@PathVariable Long categoryId) {
+        List<Note> notes = noteService.getNotesByCategory(categoryId);
+        return Result.success(notes);
     }
 }

@@ -152,9 +152,10 @@ const handleRecentNoteClick = (noteId) => {
 
 // 获取标签类型（根据笔记数量）
 const getTagType = (count) => {
-  if (count >= 20) return 'danger'
-  if (count >= 10) return 'warning'
-  if (count >= 5) return 'success'
+  const noteCount = count || 0
+  if (noteCount >= 20) return 'danger'
+  if (noteCount >= 10) return 'warning'
+  if (noteCount >= 5) return 'success'
   return 'info'
 }
 

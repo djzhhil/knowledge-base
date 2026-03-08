@@ -19,8 +19,15 @@ public class BatchImportResponse {
     private int total;
     private int success;
     private int failed;
-    private String message;
+    private String summaryMessage;
     private List<FileUploadResponse> results;
+
+    /**
+     * 获取消息（兼容性方法）
+     */
+    public String getMessage() {
+        return summaryMessage;
+    }
 
     /**
      * 创建批量导入响应
@@ -41,7 +48,7 @@ public class BatchImportResponse {
             }
         }
 
-        response.setMessage(
+        response.setSummaryMessage(
                 String.format("批量导入完成：成功 %d 个，失败 %d 个", response.getSuccess(), response.getFailed())
         );
         return response;
@@ -53,11 +60,7 @@ public class BatchImportResponse {
         response.setSuccess(0);
         response.setFailed(0);
         response.setResults(new ArrayList<>());
-        response.setMessage(message);
+        response.setSummaryMessage(message);
         return response;
-    }
-
-    public String getMessage() {
-        return String.format("批量导入完成：成功 %d 个，失败 %d 个", success, failed);
     }
 }

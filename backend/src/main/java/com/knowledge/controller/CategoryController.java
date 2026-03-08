@@ -1,5 +1,6 @@
 package com.knowledge.controller;
 
+import com.knowledge.dto.Result;
 import com.knowledge.entity.Category;
 import com.knowledge.service.CategoryService;
 import jakarta.validation.Valid;
@@ -20,18 +21,33 @@ public class CategoryController {
     }
 
     @GetMapping
-    public Page<Category> getAllCategories(@RequestParam(defaultValue = "0") int page,
+    public Result<Page<Category>> getAllCategories(@RequestParam(defaultValue = "0") int page,
                                             @RequestParam(defaultValue = "10") int size) {
-        return categoryService.getAllCategories(PageRequest.of(page, size));
+        Page<Category> categories = categoryService.getAllCategories(PageRequest.of(page, size));
+        return Result.success(categories);
     }
 
     @PostMapping
-    public Category createCategory(@Valid @RequestBody Category category) {
-        return categoryService.createCategory(category);
+    public Result<Category> createCategory(@Valid @RequestBody Category category) {
+        Category createdCategory = categoryService.createCategory(category);
+        return Result.success(createdCategory);
+    }
+
+    @GetMapping("/{id}")
+    public Result<Category> getCategoryById(@PathVariable Long id) {
+        Category category = categoryService.getCategoryById(id);
+        return Result.success(category);
+    }
+
+    @PutMapping("/{id}")
+    public Result<Category> updateCategory(@PathVariable Long id, @Valid @RequestBody Category category) {
+        Category updatedCategory = categoryService.updateCategory(id, category);
+        return Result.success(updatedCategory);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteCategory(@PathVariable Long id) {
+    public Result<Void> deleteCategory(@PathVariable Long id) {
         categoryService.deleteCategory(id);
+        return Result.success("删除成功", null);
     }
 }

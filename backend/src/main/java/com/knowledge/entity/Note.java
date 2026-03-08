@@ -24,12 +24,13 @@ public class Note {
     @Size(max = 10000, message = "内容长度不能超过10000个字符")
     private String content;
 
-    @Column(name = "category_id")
-    private Long categoryId;
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category;
 
     private String tags;
 
-    @Column(name = "content_hash", unique = true, nullable = true)
+    @Column(name = "content_hash", nullable = false)
     private String contentHash;
 
     @JsonIgnore

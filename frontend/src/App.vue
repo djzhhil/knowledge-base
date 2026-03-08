@@ -173,8 +173,18 @@ const loadData = async () => {
 }
 
 // 处理搜索
-const handleSearch = (keyword) => {
+const handleSearch = async (keyword) => {
   searchKeyword.value = keyword
+  loading.value = true
+  try {
+    const res = await api.notes.search(keyword)
+    notes.value = res.data || []
+  } catch (error) {
+    console.error('搜索失败:', error)
+    ElMessage.error('搜索失败')
+  } finally {
+    loading.value = false
+  }
 }
 
 // 处理主题切换

@@ -12,9 +12,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FileUploadResponse {
+    
+    /** 上传成功后关联的笔记ID */
     private Long noteId;
+    
+    /** 笔记标题 */
     private String title;
+    
+ /** 响应消息 */
     private String message;
+    
+    /** 是否上传成功 */
     private boolean success;
 
     public static FileUploadResponse success(Note note) {
