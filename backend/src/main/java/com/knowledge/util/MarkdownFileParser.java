@@ -1,5 +1,7 @@
 package com.knowledge.util;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -7,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -18,6 +21,11 @@ import java.util.regex.Pattern;
  */
 @Slf4j
 public class MarkdownFileParser {
+
+    /**
+     * Jackson ObjectMapper 用于 JSON 解析
+     */
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * 默认最大文件大小（5MB）
@@ -147,28 +155,17 @@ public class MarkdownFileParser {
     }
 
     /**
-     * 解析 JSON 格式 frontmatter（简单实现）
+     * 解析 JSON 格式 frontmatter（使用 Jackson）
      *
      * @param jsonContent   JSON 内容
      * @param frontmatter   存储解析结果的 Map
      */
     private static void parseJsonFrontmatter(String jsonContent, Map<String, String> frontmatter) {
-        // 简化的 JSON 解析，实际项目可使用 Jackson 或 Gson
         try {
-            String normalized = jsonContent.replaceAll("\\s", "")
-                    .replaceAll("\"", "")
-                    .replace("{", "")
-                    .replace("}", "");
-
-            String[] pairs = normalized.split(",");
-            for (String pair : pairs) {
-                String[] kv = pair.split(":");
-                if (kv.length == 2) {
-                    frontmatter.put(kv[0], kv[1]);
-                }
-            }
+            Map<String, String> parsed = objectMapper.readValue(jsonContent, new TypeReference<Map<String, String>>() {});
+            frontmatter.putAll(parsed);
         } catch (Exception e) {
-            log.error("解析 JSON frontmatter 失败", e);
+            log.warn("JSON frontmatter 解析失败: {}", e.getMessage());
         }
     }
 
