@@ -82,6 +82,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { ElMessage } from 'element-plus'
 import { UploadFilled, Close } from '@element-plus/icons-vue'
 
 // Props
