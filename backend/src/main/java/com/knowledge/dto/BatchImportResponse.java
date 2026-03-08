@@ -19,6 +19,7 @@ public class BatchImportResponse {
     private int total;
     private int success;
     private int failed;
+    private String message;
     private List<FileUploadResponse> results;
 
     /**

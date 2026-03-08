@@ -254,10 +254,18 @@ public class MarkdownFileParser {
             return filename;
         }
 
-        // 将连字符和下划线替换为空格，首字母大写
-        return baseName.replace("-", " ").replace("_", " ")
-                .replaceAll("\\b\\w", String::valueOf(Character::toUpperCase))
-                .trim();
+        String result = baseName.replace("-", " ").replace("_", " ");
+
+        Pattern pattern = Pattern.compile("\\b\\w");
+        Matcher matcher = pattern.matcher(result);
+        StringBuffer sb = new StringBuffer();
+
+        while (matcher.find()) {
+            matcher.appendReplacement(sb, matcher.group().toUpperCase());
+        }
+        matcher.appendTail(sb);
+
+        return sb.toString().trim();
     }
 
     /**
