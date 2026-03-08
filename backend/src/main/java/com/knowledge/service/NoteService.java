@@ -55,6 +55,16 @@ public class NoteService {
     }
 
     /**
+     * 检查是否存在相同内容哈希的笔记
+     *
+     * @param contentHash 内容哈希
+     * @return 是否存在
+     */
+    public boolean existsByContentHash(String contentHash) {
+        return noteRepository.existsByContentHash(contentHash);
+    }
+
+    /**
      * 批量创建笔记（事务管理）
      *
      * @param notes 笔记列表

@@ -23,6 +23,9 @@ public class Note {
 
     private String tags;
 
+    @Column(name = "content_hash", unique = true, nullable = true)
+    private String contentHash;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 

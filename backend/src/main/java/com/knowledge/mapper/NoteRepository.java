@@ -16,4 +16,6 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
            "LOWER(n.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(n.content) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     List<Note> searchNotes(@Param("keyword") String keyword);
+
+    boolean existsByContentHash(String contentHash);
 }

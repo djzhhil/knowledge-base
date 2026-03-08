@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -151,11 +152,23 @@ public class FileUploadController {
             // 读取文件内容
             String content = new String(file.getBytes(), StandardCharsets.UTF_8);
 
+            // 计算文件内容的 MD5 哈希
+            String contentHash = calculateMD5Hash(content);
+
+            // 检查是否已存在相同内容的笔记
+            if (noteService.existsByContentHash(contentHash)) {
+                log.debug("文件内容已存在，跳过: {}", filename);
+                return FileUploadResponse.error(filename + ": 文件内容已存在");
+            }
+
             // 解析 Markdown 文件
             Map<String, String> parsed = MarkdownFileParser.parseMarkdownFile(filename, content);
 
             // 创建笔记实体
             Note note = createNoteFromParsedData(parsed);
+
+            // 设置内容哈希
+            note.setContentHash(contentHash);
 
             // 保存到数据库
             Note savedNote = noteService.createNote(note);
@@ -170,6 +183,27 @@ public class FileUploadController {
         } catch (Exception e) {
             log.error("文件处理异常: {}", filename, e);
             return FileUploadResponse.error(filename + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * 计算字符串的 MD5 哈希
+     *
+     * @param content 内容
+     * @return MD5 哈希值
+     */
+    private String calculateMD5Hash(String content) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(content.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            log.error("计算 MD5 哈希失败", e);
+            return "";
         }
     }
 
