@@ -142,9 +142,10 @@ const loadData = async () => {
       Promise.resolve({ data: [] })
     ])
 
-    notes.value = notesRes.data.content || []
+    // 响应拦截器已自动解包数据，直接使用 .data 即可
+    notes.value = Array.isArray(notesRes.data) ? notesRes.data : (notesRes.data || [])
     
-    const categoryList = catsRes.data.content || []
+    const categoryList = Array.isArray(catsRes.data) ? catsRes.data : (catsRes.data || [])
     
     categories.value = categoryList.map(c => ({
       id: c.id,
