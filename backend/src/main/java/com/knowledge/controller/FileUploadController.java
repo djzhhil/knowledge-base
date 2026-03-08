@@ -38,7 +38,6 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/api/notes")
-@CrossOrigin(origins = "*")
 public class FileUploadController {
 
     private final NoteService noteService;
