@@ -1,5 +1,6 @@
 package com.knowledge.controller;
 
+import com.knowledge.config.FileUploadProperties;
 import com.knowledge.dto.BatchImportResponse;
 import com.knowledge.dto.FileUploadResponse;
 import com.knowledge.dto.Result;
@@ -27,6 +28,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import java.util.List;
 
 /**
  * 文件上传控制器
@@ -39,10 +41,12 @@ import java.util.stream.Collectors;
 public class FileUploadController {
 
     private final NoteService noteService;
+    private final FileUploadProperties fileUploadProperties;
     private final ExecutorService executorService;
 
-    public FileUploadController(NoteService noteService) {
+    public FileUploadController(NoteService noteService, FileUploadProperties fileUploadProperties) {
         this.noteService = noteService;
+        this.fileUploadProperties = fileUploadProperties;
         // 创建固定大小线程池，用于并行处理文件
         this.executorService = Executors.newFixedThreadPool(10);
     }
@@ -229,8 +233,37 @@ public class FileUploadController {
             throw new IllegalArgumentException("文件类型错误：必须是文本文件");
         }
 
-        // 验证文件扩展名和大小
-        MarkdownFileParser.validateFile(filename, file.getSize());
+        // 验证文件扩展名
+        String extension = getFileExtension(filename);
+        boolean isExtensionValid = false;
+        for (String allowedExt : fileUploadProperties.getAllowedExtensions()) {
+            if (allowedExt.equalsIgnoreCase(extension)) {
+                isExtensionValid = true;
+                break;
+            }
+        }
+        if (!isExtensionValid) {
+            throw new IllegalArgumentException("不支持的文件类型，仅支持 .md 或 .markdown 文件");
+        }
+
+        // 验证文件大小
+        if (file.getSize() <= 0 || file.getSize() > fileUploadProperties.getMaxSize()) {
+            throw new IllegalArgumentException("文件大小超出限制，最大允许 " + (fileUploadProperties.getMaxSize() / 1024 / 1024) + "MB");
+        }
+    }
+
+    /**
+     * 获取文件扩展名
+     *
+     * @param filename 文件名
+     * @return 扩展名（包含点）
+     */
+    private String getFileExtension(String filename) {
+        int lastDotIndex = filename.lastIndexOf(".");
+        if (lastDotIndex == -1) {
+            return "";
+        }
+        return filename.substring(lastDotIndex);
     }
 
     /**
