@@ -1,5 +1,6 @@
 package com.knowledge.service;
 
+import com.knowledge.entity.Category;
 import com.knowledge.entity.Note;
 import com.knowledge.exception.BusinessException;
 import com.knowledge.mapper.NoteRepository;
@@ -16,9 +17,11 @@ import java.util.List;
 @Slf4j
 public class NoteService {
     private final NoteRepository noteRepository;
+    private final CategoryService categoryService;
 
-    public NoteService(NoteRepository noteRepository) {
+    public NoteService(NoteRepository noteRepository, CategoryService categoryService) {
         this.noteRepository = noteRepository;
+        this.categoryService = categoryService;
     }
 
     public List<Note> getAllNotes() {
@@ -47,7 +50,16 @@ public class NoteService {
             log.warn("创建笔记失败：笔记标题为空");
             throw new BusinessException("笔记标题不能为空");
         }
-        // TODO: 分类是否存在校验需要依赖 CategoryService，暂时跳过
+        // 分类是否存在校验
+        if (note.getCategory() != null && note.getCategory().getId() != null) {
+            try {
+                Category category = categoryService.getCategoryById(note.getCategory().getId());
+                note.setCategory(category);
+            } catch (BusinessException e) {
+                log.warn("创建笔记失败：分类不存在，ID={}", note.getCategory().getId());
+                throw new BusinessException("指定的分类不存在");
+            }
+        }
         Note savedNote = noteRepository.save(note);
         log.info("创建笔记成功，ID={}, title={}", savedNote.getId(), savedNote.getTitle());
         return savedNote;
