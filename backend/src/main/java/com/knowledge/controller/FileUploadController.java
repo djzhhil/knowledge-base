@@ -189,6 +189,12 @@ public class FileUploadController {
             throw new IllegalArgumentException("文件名不能为空");
         }
 
+        // 验证文件内容类型
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("text/")) {
+            throw new IllegalArgumentException("文件类型错误：必须是文本文件");
+        }
+
         // 验证文件扩展名和大小
         MarkdownFileParser.validateFile(filename, file.getSize());
     }
