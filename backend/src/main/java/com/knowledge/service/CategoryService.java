@@ -23,6 +23,9 @@ public class CategoryService {
     }
 
     public void deleteCategory(Long id) {
+        if (!categoryRepository.existsById(id)) {
+            throw new RuntimeException("分类不存在");
+        }
         categoryRepository.deleteById(id);
     }
 }

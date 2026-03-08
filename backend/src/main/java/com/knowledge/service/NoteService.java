@@ -19,7 +19,8 @@ public class NoteService {
     }
 
     public Note getNoteById(Long id) {
-        return noteRepository.findById(id).orElse(null);
+        return noteRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("笔记不存在"));
     }
 
     public Note createNote(Note note) {
@@ -27,18 +28,20 @@ public class NoteService {
     }
 
     public Note updateNote(Long id, Note note) {
-        Note existingNote = noteRepository.findById(id).orElse(null);
-        if (existingNote != null) {
-            existingNote.setTitle(note.getTitle());
-            existingNote.setContent(note.getContent());
-            existingNote.setCategoryId(note.getCategoryId());
-            existingNote.setTags(note.getTags());
-            return noteRepository.save(existingNote);
-        }
-        return null;
+        Note existingNote = noteRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("笔记不存在"));
+
+        existingNote.setTitle(note.getTitle());
+        existingNote.setContent(note.getContent());
+        existingNote.setCategoryId(note.getCategoryId());
+        existingNote.setTags(note.getTags());
+        return noteRepository.save(existingNote);
     }
 
     public void deleteNote(Long id) {
+        if (!noteRepository.existsById(id)) {
+            throw new RuntimeException("笔记不存在");
+        }
         noteRepository.deleteById(id);
     }
 
