@@ -10,8 +10,11 @@ import java.util.List;
 @RequestMapping("/api/notes")
 @CrossOrigin(origins = "*")
 public class NoteController {
-    @Autowired
-    private NoteService noteService;
+    private final NoteService noteService;
+
+    public NoteController(NoteService noteService) {
+        this.noteService = noteService;
+    }
 
     @GetMapping
     public List<Note> getAllNotes() {

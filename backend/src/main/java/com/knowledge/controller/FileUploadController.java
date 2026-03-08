@@ -39,7 +39,6 @@ public class FileUploadController {
     private final NoteService noteService;
     private final ExecutorService executorService;
 
-    @Autowired
     public FileUploadController(NoteService noteService) {
         this.noteService = noteService;
         // 创建固定大小线程池，用于并行处理文件

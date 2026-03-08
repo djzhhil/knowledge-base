@@ -8,8 +8,11 @@ import java.util.List;
 
 @Service
 public class NoteService {
-    @Autowired
-    private NoteRepository noteRepository;
+    private final NoteRepository noteRepository;
+
+    public NoteService(NoteRepository noteRepository) {
+        this.noteRepository = noteRepository;
+    }
 
     public List<Note> getAllNotes() {
         return noteRepository.findAll();

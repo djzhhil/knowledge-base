@@ -10,8 +10,11 @@ import java.util.List;
 @RequestMapping("/api/categories")
 @CrossOrigin(origins = "*")
 public class CategoryController {
-    @Autowired
-    private CategoryService categoryService;
+    private final CategoryService categoryService;
+
+    public CategoryController(CategoryService categoryService) {
+        this.categoryService = categoryService;
+    }
 
     @GetMapping
     public List<Category> getAllCategories() {
