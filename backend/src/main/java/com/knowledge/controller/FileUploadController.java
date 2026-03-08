@@ -7,6 +7,7 @@ import com.knowledge.entity.Note;
 import com.knowledge.exception.BusinessException;
 import com.knowledge.service.NoteService;
 import com.knowledge.util.MarkdownFileParser;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -213,5 +214,29 @@ public class FileUploadController {
         }
 
         return note;
+    }
+
+    /**
+     * 应用关闭时优雅关闭线程池
+     */
+    @jakarta.annotation.PreDestroy
+    public void shutdown() {
+        log.info("开始关闭文件上传线程池...");
+        executorService.shutdown();
+        try {
+            if (!executorService.awaitTermination(60, java.util.concurrent.TimeUnit.SECONDS)) {
+                log.warn("线程池未在60秒内关闭，强制关闭");
+                executorService.shutdownNow();
+                if (!executorService.awaitTermination(60, java.util.concurrent.TimeUnit.SECONDS)) {
+                    log.error("线程池无法关闭");
+                }
+            } else {
+                log.info("文件上传线程池已成功关闭");
+            }
+        } catch (java.lang.InterruptedException e) {
+            log.error("线程池关闭时被中断", e);
+            executorService.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 }
