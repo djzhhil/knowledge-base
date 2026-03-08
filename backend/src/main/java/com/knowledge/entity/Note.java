@@ -1,5 +1,6 @@
 package com.knowledge.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -31,9 +32,11 @@ public class Note {
     @Column(name = "content_hash", unique = true, nullable = true)
     private String contentHash;
 
+    @JsonIgnore
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @JsonIgnore
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
