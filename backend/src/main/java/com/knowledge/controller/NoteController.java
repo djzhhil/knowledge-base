@@ -4,6 +4,9 @@ import com.knowledge.entity.Note;
 import com.knowledge.service.NoteService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -18,8 +21,9 @@ public class NoteController {
     }
 
     @GetMapping
-    public List<Note> getAllNotes() {
-        return noteService.getAllNotes();
+    public Page<Note> getAllNotes(@RequestParam(defaultValue = "0") int page,
+                                   @RequestParam(defaultValue = "10") int size) {
+        return noteService.getAllNotes(PageRequest.of(page, size));
     }
 
     @GetMapping("/{id}")

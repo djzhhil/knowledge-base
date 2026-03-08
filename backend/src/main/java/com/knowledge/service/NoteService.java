@@ -3,6 +3,8 @@ package com.knowledge.service;
 import com.knowledge.entity.Note;
 import com.knowledge.mapper.NoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -17,6 +19,10 @@ public class NoteService {
 
     public List<Note> getAllNotes() {
         return noteRepository.findAll();
+    }
+
+    public Page<Note> getAllNotes(Pageable pageable) {
+        return noteRepository.findAll(pageable);
     }
 
     public Note getNoteById(Long id) {
