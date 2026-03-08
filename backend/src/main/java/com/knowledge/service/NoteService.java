@@ -1,12 +1,14 @@
 package com.knowledge.service;
 
 import com.knowledge.entity.Note;
+import com.knowledge.exception.BusinessException;
 import com.knowledge.mapper.NoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import java.util.List;
 
 @Service
@@ -27,16 +29,28 @@ public class NoteService {
 
     public Note getNoteById(Long id) {
         return noteRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("笔记不存在"));
+            .orElseThrow(() -> new BusinessException("笔记不存在"));
     }
 
+    @Transactional
     public Note createNote(Note note) {
+        // 参数校验
+        if (!StringUtils.hasText(note.getTitle())) {
+            throw new BusinessException("笔记标题不能为空");
+        }
+        // TODO: 分类是否存在校验需要依赖 CategoryService，暂时跳过
         return noteRepository.save(note);
     }
 
+    @Transactional
     public Note updateNote(Long id, Note note) {
+        // 参数校验
+        if (note == null) {
+            throw new BusinessException("笔记信息不能为空");
+        }
+
         Note existingNote = noteRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("笔记不存在"));
+            .orElseThrow(() -> new BusinessException("笔记不存在"));
 
         existingNote.setTitle(note.getTitle());
         existingNote.setContent(note.getContent());
@@ -45,9 +59,10 @@ public class NoteService {
         return noteRepository.save(existingNote);
     }
 
+    @Transactional
     public void deleteNote(Long id) {
         if (!noteRepository.existsById(id)) {
-            throw new RuntimeException("笔记不存在");
+            throw new BusinessException("笔记不存在");
         }
         noteRepository.deleteById(id);
     }
