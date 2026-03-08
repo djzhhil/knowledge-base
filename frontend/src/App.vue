@@ -139,21 +139,25 @@ const loadData = async () => {
       api.notes.getAll(),
       api.categories.getAll(),
       // TODO: 获取标签列表的 API
-      Promise.resolve({ data: [] })
+      Promise.resolve({ data: { content: [] } })
     ])
 
-    // 响应拦截器已自动解包数据，直接使用 .data 即可
-    notes.value = Array.isArray(notesRes.data) ? notesRes.data : (notesRes.data || [])
-    
-    const categoryList = Array.isArray(catsRes.data) ? catsRes.data : (catsRes.data || [])
-    
+    // 安全提取笔记列表
+    notes.value = Array.isArray(notesRes.data?.data?.content)
+      ? notesRes.data.data.content
+      : []
+
+    // 安全提取分类列表
+    const categoryList = catsRes.data?.data?.content || []
     categories.value = categoryList.map(c => ({
       id: c.id,
       label: c.name,
       children: []
     }))
-    
-    tags.value = tagsRes.data || []
+
+    // 安全提取标签列表
+    tags.value = tagsRes.data?.data?.content || []
+
     // 设置最近访问笔记
     recentNotes.value = [...notes.value]
       .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))

@@ -283,7 +283,7 @@ public class FileUploadController {
         if (StringUtils.isNotBlank(categoryName)) {
             // 注意：这里需要根据实际需求实现分类查找逻辑
             // 暂时设置为 null，可以根据实际需求扩展
-            note.setCategoryId(null);
+            note.setCategory(null);
         }
 
         return note;

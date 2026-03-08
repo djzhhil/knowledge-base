@@ -88,4 +88,38 @@ public class CategoryService {
         categoryRepository.deleteById(id);
         log.info("删除分类成功，ID={}", id);
     }
+
+    @Transactional
+    public Category updateCategory(Long id, Category category) {
+        log.debug("更新分类，ID={}", id);
+
+        // 参数校验
+        if (category == null || !StringUtils.hasText(category.getName())) {
+            log.warn("更新分类失败：分类信息为空或名称为空");
+            throw new BusinessException("分类信息不能为空，名称不能为空");
+        }
+
+        // 查找已有分类
+        Category existingCategory = categoryRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("更新分类失败：分类不存在，ID={}", id);
+                    return new BusinessException("分类不存在");
+                });
+
+        // 检查名称是否重复
+        if (!existingCategory.getName().equals(category.getName())
+                && categoryRepository.findByName(category.getName()).isPresent()) {
+            log.warn("更新分类失败：分类名称已存在，name={}", category.getName());
+            throw new BusinessException("分类名称已存在");
+        }
+
+        // 更新字段
+        existingCategory.setName(category.getName());
+        existingCategory.setDescription(category.getDescription()); // 如果有 description 字段
+        // 如果有其他字段，也可以在这里更新
+
+        Category updatedCategory = categoryRepository.save(existingCategory);
+        log.info("更新分类成功，ID={}, name={}", updatedCategory.getId(), updatedCategory.getName());
+        return updatedCategory;
+    }
 }

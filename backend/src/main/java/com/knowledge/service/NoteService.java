@@ -57,22 +57,26 @@ public class NoteService {
     public Note updateNote(Long id, Note note) {
         log.debug("更新笔记，ID={}", id);
 
-        // 参数校验
         if (note == null) {
             log.warn("更新笔记失败：笔记信息为空");
             throw new BusinessException("笔记信息不能为空");
         }
 
         Note existingNote = noteRepository.findById(id)
-            .orElseThrow(() -> {
-                log.warn("更新笔记失败：笔记不存在，ID={}", id);
-                return new BusinessException("笔记不存在");
-            });
+                .orElseThrow(() -> {
+                    log.warn("更新笔记失败：笔记不存在，ID={}", id);
+                    return new BusinessException("笔记不存在");
+                });
 
         existingNote.setTitle(note.getTitle());
         existingNote.setContent(note.getContent());
-        existingNote.setCategoryId(note.getCategoryId());
         existingNote.setTags(note.getTags());
+
+        // 更新分类
+        if (note.getCategory() != null) {
+            existingNote.setCategory(note.getCategory());
+        }
+
         Note updatedNote = noteRepository.save(existingNote);
         log.info("更新笔记成功，ID={}, title={}", updatedNote.getId(), updatedNote.getTitle());
         return updatedNote;
