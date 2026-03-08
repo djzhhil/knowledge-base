@@ -4,6 +4,7 @@ import com.knowledge.entity.Note;
 import com.knowledge.mapper.NoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
@@ -51,5 +52,16 @@ public class NoteService {
 
     public List<Note> getNotesByCategory(Long categoryId) {
         return noteRepository.findByCategoryId(categoryId);
+    }
+
+    /**
+     * 批量创建笔记（事务管理）
+     *
+     * @param notes 笔记列表
+     * @return 保存后的笔记列表
+     */
+    @Transactional
+    public List<Note> batchCreateNotes(List<Note> notes) {
+        return noteRepository.saveAll(notes);
     }
 }
