@@ -105,18 +105,11 @@
 
     <!-- 编辑器内容 -->
     <div class="editor-content" :class="{ fullscreen: isFullscreen }">
-      <mavon-editor
+      <MdEditor
         v-model="noteContent"
-        :toolbars="toolbars"
-        :subfield="editorMode === 'split'"
-        :preview="editorMode === 'preview'"
-        :editable="editorMode === 'edit'"
-        :toolbars-flag="editorMode !== 'preview'"
-        :boxShadow="false"
-        :ishljs="true"
-        @imgAdd="handleImageAdd"
-        @save="handleAutoSave"
-        ref="editorRef"
+        :preview="editorMode !== 'edit'"
+        :toolbars="editorMode !== 'preview'"
+        @onSave="handleAutoSave"
         class="markdown-editor"
       />
     </div>
@@ -199,8 +192,8 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { mavonEditor } from 'mavon-editor'
-import 'mavon-editor/dist/css/index.css'
+import { MdEditor } from 'md-editor-v3'
+import 'md-editor-v3/lib/style.css'
 import {
   Edit, View, Reading, Star, StarFilled, Upload, Download,
   Delete, FullScreen, Check, Document, Clock, Plus
@@ -208,6 +201,7 @@ import {
 import UploadDialog from './UploadDialog.vue'
 
 // Props
+const MdEditorComponent = MdEditor
 const props = defineProps({
   note: {
     type: Object,
@@ -243,36 +237,6 @@ const selectedTags = ref([])
 const showUpload = ref(false)
 let autoSaveTimer = null
 
-// mavon-editor 工具栏配置
-const toolbars = {
-  bold: true,
-  italic: true,
-  header: true,
-  underline: true,
-  strikethrough: true,
-  mark: true,
-  superscript: true,
-  subscript: true,
-  quote: true,
-  ol: true,
-  ul: true,
-  link: true,
-  imagelink: true,
-  code: true,
-  table: true,
-  htmlcode: true,
-  help: true,
-  undo: true,
-  redo: true,
-  trash: true,
-  save: true,
-  navigation: true,
-  alignleft: true,
-  aligncenter: true,
-  alignright: true,
-  subfield: true,
-  preview: true
-}
 
 // 字数统计
 const wordCount = computed(() => {
@@ -289,7 +253,9 @@ const readingTime = computed(() => {
 watch(() => props.note, (newNote) => {
   if (newNote) {
     noteContent.value = newNote.content || ''
-    selectedTags.value = newNote.tags?.map(t => t.id) || []
+    selectedTags.value = Array.isArray(newNote.tags)
+      ? newNote.tags.map(t => t.id ?? t)
+      : []
   } else {
     noteContent.value = ''
     selectedTags.value = []
@@ -470,77 +436,6 @@ onUnmounted(() => {
   width: 100%;
 }
 
-/* mavon-editor 主题适配 */
-:deep(.v-note-wrapper) {
-  background: var(--bg-primary);
-  border: none;
-}
-
-:deep(.v-note-show) {
-  background: var(--bg-primary);
-}
-
-:deep(.v-note-edit) {
-  background: var(--bg-primary);
-}
-
-:deep(.v-note-op) {
-  background: var(--bg-secondary) !important;
-  border-bottom: 1px solid var(--border-color) !important;
-}
-
-:deep(.v-note-op .op-icon) {
-  color: var(--text-secondary);
-}
-
-:deep(.v-note-op .op-icon:hover) {
-  color: var(--primary-color);
-}
-
-:deep(.v-note-edit .content-input) {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-}
-
-:deep(.v-note-show .markdown-body) {
-  color: var(--text-primary);
-}
-
-:deep(.v-note-show .markdown-body h1) {
-  color: var(--text-primary);
-  border-bottom-color: var(--border-color);
-}
-
-:deep(.v-note-show .markdown-body pre) {
-  background: var(--bg-secondary);
-}
-
-:deep(.v-note-show .markdown-body code) {
-  background: var(--bg-tertiary);
-  color: var(--primary-color);
-}
-
-/* 滚动条样式 */
-:deep(.v-note-wrapper .v-note-op),
-:deep(.v-note-wrapper .v-note-edit),
-:deep(.v-note-wrapper .v-note-show) {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-color) var(--bg-secondary);
-}
-
-:deep(.v-note-wrapper ::-webkit-scrollbar) {
-  width: 8px;
-  height: 8px;
-}
-
-:deep(.v-note-wrapper ::-webkit-scrollbar-track) {
-  background: var(--bg-secondary);
-}
-
-:deep(.v-note-wrapper ::-webkit-scrollbar-thumb) {
-  background: var(--border-color);
-  border-radius: 4px;
-}
 
 /* 编辑器底部 */
 .editor-footer {

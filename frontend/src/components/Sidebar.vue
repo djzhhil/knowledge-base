@@ -131,7 +131,7 @@ const emit = defineEmits(['selectCategory', 'selectTag', 'selectRecent', 'toggle
 const selectedTagId = ref(null)
 const treeProps = {
   children: 'children',
-  label: 'name'
+  label: 'label'
 }
 
 // 处理分类点击

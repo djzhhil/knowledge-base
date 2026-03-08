@@ -142,10 +142,17 @@ const loadData = async () => {
       Promise.resolve({ data: [] })
     ])
 
-    notes.value = notesRes.data
-    categories.value = catsRes.data
-    tags.value = tagsRes.data
-
+    notes.value = notesRes.data.content || []
+    
+    const categoryList = catsRes.data.content || []
+    
+    categories.value = categoryList.map(c => ({
+      id: c.id,
+      label: c.name,
+      children: []
+    }))
+    
+    tags.value = tagsRes.data || []
     // 设置最近访问笔记
     recentNotes.value = [...notes.value]
       .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
