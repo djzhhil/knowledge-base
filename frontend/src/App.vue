@@ -276,21 +276,29 @@ const handleSelectNote = (noteId) => {
 // 处理保存笔记
 const handleSaveNote = async (noteData) => {
   try {
-    // TODO: 调用 API 保存笔记
-    console.log('保存笔记:', noteData)
+    let res
 
-    // 更新本地数据
-    const index = notes.value.findIndex(n => n.id === noteData.id)
-    if (index !== -1) {
-      notes.value[index] = {
-        ...notes.value[index],
-        ...noteData,
-        updatedAt: new Date().toISOString()
-      }
-      currentNote.value = notes.value[index]
+    if (noteData.id) {
+      // 更新现有笔记
+      res = await api.notes.update(noteData.id, noteData)
+      ElMessage.success('更新成功')
+    } else {
+      // 创建新笔记
+      res = await api.notes.create(noteData)
+      ElMessage.success('创建成功')
     }
 
-    ElMessage.success('保存成功')
+    // 更新本地数据
+    const index = notes.value.findIndex(n => n.id === res.data.id)
+    if (index !== -1) {
+      notes.value[index] = res.data
+    } else {
+      notes.value.push(res.data)
+    }
+
+    if (currentNote.value && currentNote.value.id === res.data.id) {
+      currentNote.value = res.data
+    }
   } catch (error) {
     console.error('保存失败:', error)
     ElMessage.error('保存失败')
@@ -329,8 +337,8 @@ const handleDeleteNote = async (noteId) => {
       type: 'warning'
     })
 
-    // TODO: 调用 API 删除笔记
-    console.log('删除笔记:', noteId)
+    // 调用删除接口
+    await api.notes.delete(noteId)
 
     // 从列表中移除
     const index = notes.value.findIndex(n => n.id === noteId)
@@ -343,8 +351,6 @@ const handleDeleteNote = async (noteId) => {
       selectedNoteId.value = null
       currentNote.value = null
     }
-
-    ElMessage.success('删除成功')
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除失败:', error)
