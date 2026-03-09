@@ -12,6 +12,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 @Service
@@ -52,6 +54,11 @@ public class NoteService {
         if (!StringUtils.hasText(note.getTitle())) {
             log.warn("创建笔记失败：笔记标题为空");
             throw new BusinessException("笔记标题不能为空");
+        }
+
+        // 自动生成 contentHash
+        if (note.getContentHash() == null || note.getContentHash().isEmpty()) {
+            note.setContentHash(calculateMD5Hash(note.getContent()));
         }
 
         // 通过 categoryId 查询 Category 对象并设置
@@ -148,5 +155,28 @@ public class NoteService {
         List<Note> savedNotes = noteRepository.saveAll(notes);
         log.info("批量创建笔记成功，数量={}", savedNotes.size());
         return savedNotes;
+    }
+
+    /**
+     * 计算内容的 MD5 哈希值
+     *
+     * @param content 内容
+     * @return MD5 哈希字符串
+     */
+    private String calculateMD5Hash(String content) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] hash = md.digest(content.getBytes());
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            log.error("MD5 算法不可用", e);
+            throw new RuntimeException("MD5 算法不可用", e);
+        }
     }
 }

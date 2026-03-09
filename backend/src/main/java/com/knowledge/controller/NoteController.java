@@ -11,7 +11,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/notes")
@@ -63,5 +65,25 @@ public class NoteController {
     public Result<List<Note>> getNotesByCategory(@PathVariable Long categoryId) {
         List<Note> notes = noteService.getNotesByCategory(categoryId);
         return Result.success(notes);
+    }
+
+    @GetMapping("/tags")
+    public Result<Map<String, Integer>> getAllTagsWithCount() {
+        List<Note> notes = noteService.getAllNotes();
+        Map<String, Integer> tagCountMap = new HashMap<>();
+
+        for (Note note : notes) {
+            if (note.getTags() != null && !note.getTags().isEmpty()) {
+                String[] tagArray = note.getTags().split(",");
+                for (String tag : tagArray) {
+                    String tagName = tag.trim();
+                    if (!tagName.isEmpty()) {
+                        tagCountMap.put(tagName, tagCountMap.getOrDefault(tagName, 0) + 1);
+                    }
+                }
+            }
+        }
+
+        return Result.success(tagCountMap);
     }
 }

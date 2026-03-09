@@ -64,6 +64,7 @@ public class Note {
 
     /** 笔记标签 */
     @Size(max = 500, message = "标签长度不能超过500个字符")
+    @Column(columnDefinition = "VARCHAR(500)")
     private String tags;
 
     /**

@@ -14,6 +14,8 @@ import java.util.List;
 public interface NoteRepository extends JpaRepository<Note, Long> {
     List<Note> findByCategoryId(Long categoryId);
 
+    Long countByCategoryId(Long categoryId);
+
     Page<Note> findAll(Pageable pageable);
 
     @Query("SELECT n FROM Note n WHERE " +

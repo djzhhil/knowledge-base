@@ -1,6 +1,7 @@
 package com.knowledge.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -29,7 +30,11 @@ public class Category {
     
     /** 分类描述 */
     private String description;
-    
+
+    /** 笔记数量（不持久化） */
+    @Transient
+    private Integer noteCount;
+
     /** 创建时间 */
     @JsonIgnore
     @Column(name = "created_at")

@@ -26,7 +26,15 @@ public class CategoryService {
 
     public List<Category> getAllCategories() {
         log.debug("获取所有分类");
-        return categoryRepository.findAll();
+        List<Category> categories = categoryRepository.findAll();
+
+        // 为每个分类计算笔记数量
+        for (Category category : categories) {
+            Long count = noteRepository.countByCategoryId(category.getId());
+            category.setNoteCount(count != null ? count.intValue() : 0);
+        }
+
+        return categories;
     }
 
     public Page<Category> getAllCategories(Pageable pageable) {
