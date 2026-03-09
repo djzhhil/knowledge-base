@@ -3,6 +3,7 @@ package com.knowledge.service;
 import com.knowledge.entity.Category;
 import com.knowledge.entity.Note;
 import com.knowledge.exception.BusinessException;
+import com.knowledge.mapper.CategoryRepository;
 import com.knowledge.mapper.NoteRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,10 +19,12 @@ import java.util.List;
 public class NoteService {
     private final NoteRepository noteRepository;
     private final CategoryService categoryService;
+    private final CategoryRepository categoryRepository;
 
-    public NoteService(NoteRepository noteRepository, CategoryService categoryService) {
+    public NoteService(NoteRepository noteRepository, CategoryService categoryService, CategoryRepository categoryRepository) {
         this.noteRepository = noteRepository;
         this.categoryService = categoryService;
+        this.categoryRepository = categoryRepository;
     }
 
     public List<Note> getAllNotes() {
@@ -50,16 +53,14 @@ public class NoteService {
             log.warn("创建笔记失败：笔记标题为空");
             throw new BusinessException("笔记标题不能为空");
         }
-        // 分类是否存在校验
-        if (note.getCategory() != null && note.getCategory().getId() != null) {
-            try {
-                Category category = categoryService.getCategoryById(note.getCategory().getId());
-                note.setCategory(category);
-            } catch (BusinessException e) {
-                log.warn("创建笔记失败：分类不存在，ID={}", note.getCategory().getId());
-                throw new BusinessException("指定的分类不存在");
-            }
+
+        // 通过 categoryId 查询 Category 对象并设置
+        if (note.getCategoryId() != null) {
+            Category category = categoryRepository.findById(note.getCategoryId())
+                .orElseThrow(() -> new BusinessException("分类不存在"));
+            note.setCategory(category);
         }
+
         Note savedNote = noteRepository.save(note);
         log.info("创建笔记成功，ID={}, title={}", savedNote.getId(), savedNote.getTitle());
         return savedNote;
@@ -84,9 +85,11 @@ public class NoteService {
         existingNote.setContent(note.getContent());
         existingNote.setTags(note.getTags());
 
-        // 更新分类
-        if (note.getCategory() != null) {
-            existingNote.setCategory(note.getCategory());
+        // 通过 categoryId 查询 Category 对象并设置
+        if (note.getCategoryId() != null) {
+            Category category = categoryRepository.findById(note.getCategoryId())
+                .orElseThrow(() -> new BusinessException("分类不存在"));
+            existingNote.setCategory(category);
         }
 
         Note updatedNote = noteRepository.save(existingNote);
