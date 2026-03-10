@@ -94,6 +94,7 @@ const loading = ref(false)
 const searchKeyword = ref('')
 const selectedCategory = ref(null)
 const selectedTag = ref(null)
+const saving = ref(false)
 
 // 当前过滤器
 const currentFilter = computed(() => ({
@@ -220,20 +221,16 @@ const handleHome = () => {
 // 处理新建笔记
 const handleNewNote = () => {
   const newNote = {
-    id: Date.now(),
+    id: null,
     title: '无标题笔记',
     content: '',
     categoryId: null,
     tags: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    isStarred: false,
-    viewCount: 0
+    isStarred: false
   }
 
-  notes.value.unshift(newNote)
-  selectedNoteId.value = newNote.id
   currentNote.value = newNote
+  selectedNoteId.value = null
 }
 
 // 处理侧边栏切换
@@ -275,34 +272,43 @@ const handleSelectNote = (noteId) => {
 
 // 处理保存笔记
 const handleSaveNote = async (noteData) => {
+  if (!noteData.content?.trim()) return
+	
+  if (saving.value) return
+
+  saving.value = true
+
   try {
     let res
 
     if (noteData.id) {
-      // 更新现有笔记
       res = await api.notes.update(noteData.id, noteData)
       ElMessage.success('更新成功')
     } else {
-      // 创建新笔记
       res = await api.notes.create(noteData)
       ElMessage.success('创建成功')
     }
 
-    // 更新本地数据
-    const index = notes.value.findIndex(n => n.id === res.data.id)
+    const savedNote = res.data
+
+    // 更新本地 notes
+    const index = notes.value.findIndex(n => n.id === savedNote.id)
+
     if (index !== -1) {
-      notes.value[index] = res.data
+      notes.value[index] = savedNote
     } else {
-      notes.value.push(res.data)
+      notes.value.unshift(savedNote)
     }
 
-    if (currentNote.value && currentNote.value.id === res.data.id) {
-      currentNote.value = res.data
-    }
+    // 更新当前笔记
+    currentNote.value = savedNote
+    selectedNoteId.value = savedNote.id
+
   } catch (error) {
-    console.error('保存失败:', error)
+    console.error(error)
     ElMessage.error('保存失败')
-    throw error
+  } finally {
+    saving.value = false
   }
 }
 

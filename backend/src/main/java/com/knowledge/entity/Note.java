@@ -85,7 +85,6 @@ public class Note {
 
     /** 内容哈希值 */
     @Column(name = "content_hash", nullable = false)
-    @NotBlank(message = "内容哈希值不能为空")
     private String contentHash;
 
     /** 创建时间 */
