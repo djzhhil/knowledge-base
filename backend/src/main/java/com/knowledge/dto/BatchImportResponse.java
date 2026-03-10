@@ -16,9 +16,9 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class BatchImportResponse {
-    private int total;
-    private int success;
-    private int failed;
+    private Integer total;
+    private Integer success;
+    private Integer failed;
     private String summaryMessage;
     private List<FileUploadResponse> results;
 
@@ -41,7 +41,7 @@ public class BatchImportResponse {
 
         for (FileUploadResponse result : results) {
             response.getResults().add(result);
-            if (result.isSuccess()) {
+            if (result.getSuccess()) {
                 response.setSuccess(response.getSuccess() + 1);
             } else {
                 response.setFailed(response.getFailed() + 1);

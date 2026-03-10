@@ -23,13 +23,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-import java.util.List;
 
 /**
  * 文件上传控制器
@@ -276,7 +276,15 @@ public class FileUploadController {
         Note note = new Note();
         note.setTitle(parsed.get("title"));
         note.setContent(parsed.get("content"));
-        note.setTags(parsed.get("tags"));
+
+        // 处理 tags：将逗号分隔的字符串转换为 List<String>
+        String tagsStr = parsed.get("tags");
+        if (StringUtils.isNotBlank(tagsStr)) {
+            List<String> tagList = Arrays.asList(tagsStr.split(","));
+            note.setTags(tagList);
+        } else {
+            note.setTags(new ArrayList<>());
+        }
 
         // 处理分类（如果数据库中有对应分类则关联，否则为 null）
         String categoryName = parsed.get("category");

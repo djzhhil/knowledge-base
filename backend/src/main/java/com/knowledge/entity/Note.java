@@ -1,6 +1,7 @@
 package com.knowledge.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -71,7 +72,7 @@ public class Note {
      * 前端发送 tags 数组时自动转换为逗号分隔字符串
      */
     @JsonProperty("tags")
-    public List<String> getTagsList() {
+    public List<String> getTags() {
         return tags != null ? Arrays.asList(tags.split(",")) : new ArrayList<>();
     }
 
@@ -79,7 +80,7 @@ public class Note {
      * 前端发送 tags 数组时自动转换为逗号分隔字符串
      */
     @JsonProperty("tags")
-    public void setTagsList(List<String> tagsList) {
+    public void setTags(List<String> tagsList) {
         this.tags = tagsList != null ? String.join(",", tagsList) : "";
     }
 
@@ -88,12 +89,12 @@ public class Note {
     private String contentHash;
 
     /** 创建时间 */
-    @JsonIgnore
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
     /** 更新时间 */
-    @JsonIgnore
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 

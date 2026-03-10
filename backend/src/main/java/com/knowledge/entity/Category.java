@@ -1,6 +1,7 @@
 package com.knowledge.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -36,7 +37,7 @@ public class Category {
     private Integer noteCount;
 
     /** 创建时间 */
-    @JsonIgnore
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 }

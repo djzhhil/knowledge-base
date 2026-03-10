@@ -23,7 +23,7 @@ public class FileUploadResponse {
     private String message;
     
     /** 是否上传成功 */
-    private boolean success;
+    private Boolean success;
 
     public static FileUploadResponse success(Note note) {
         FileUploadResponse response = new FileUploadResponse();

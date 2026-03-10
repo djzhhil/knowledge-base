@@ -73,9 +73,9 @@ public class NoteController {
         Map<String, Integer> tagCountMap = new HashMap<>();
 
         for (Note note : notes) {
-            if (note.getTags() != null && !note.getTags().isEmpty()) {
-                String[] tagArray = note.getTags().split(",");
-                for (String tag : tagArray) {
+            List<String> tagList = note.getTags();
+            if (tagList != null && !tagList.isEmpty()) {
+                for (String tag : tagList) {
                     String tagName = tag.trim();
                     if (!tagName.isEmpty()) {
                         tagCountMap.put(tagName, tagCountMap.getOrDefault(tagName, 0) + 1);
