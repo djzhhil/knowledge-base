@@ -87,7 +87,7 @@ public class CategoryService {
         }
 
         // 检查分类下是否有笔记
-        List<?> notes = noteRepository.findByCategoryId(id);
+        List<com.knowledge.entity.Note> notes = noteRepository.findByCategoryId(id);
         if (!notes.isEmpty()) {
             log.warn("删除分类失败：该分类下存在笔记，ID={}, 笔记数量={}", id, notes.size());
             throw new BusinessException("该分类下存在笔记，无法删除");

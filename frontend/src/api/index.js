@@ -97,10 +97,10 @@ export default {
     }
   },
 
-  // 文件相关
+  // 文件相关（使用 /api/notes 路径）
   files: {
     upload(formData) {
-      return api.post('/files/upload', formData, {
+      return api.post('/notes/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -109,7 +109,18 @@ export default {
     import(file) {
       const formData = new FormData()
       formData.append('file', file)
-      return api.post('/files/import', formData, {
+      return api.post('/notes/import', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+    },
+    batchImport(files) {
+      const formData = new FormData()
+      files.forEach(file => {
+        formData.append('files', file)
+      })
+      return api.post('/notes/import', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
